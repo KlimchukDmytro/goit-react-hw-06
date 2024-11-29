@@ -1,35 +1,48 @@
+import { useDispatch, useSelector } from "react-redux";
+import { addContact, selectContacts } from "../../redux/contactsSlice";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import s from "./ContactForm.module.css";
 
-const ContactForm = ({ onSubmit }) => {
-  const handleSubmit = (values, options) => {
-    onSubmit(values);
-    options.resetForm();
+const ContactForm = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(selectContacts);
+
+  const handleSubmit = (values, { resetForm }) => {
+    const { phonename, phonenumber } = values;
+
+    if (
+      contacts.some(
+        (contact) =>
+          contact.name === phonename || contact.number === phonenumber
+      )
+    ) {
+      alert("Contact with this name or number already exists.");
+      return;
+    }
+
+    dispatch(
+      addContact({
+        id: `id-${Date.now()}`,
+        name: phonename,
+        number: phonenumber,
+      })
+    );
+
+    resetForm();
   };
 
-  const orderSchema = Yup.object().shape({
-    phonename: Yup.string()
-      .min(3, "Too short!")
-      .max(50, "Too long")
-      .required("Required"),
-    phonenumber: Yup.string()
-      .min(3, "Too short!")
-      .max(50, "Too long")
-      .required("Required"),
+  const validationSchema = Yup.object().shape({
+    phonename: Yup.string().min(3).max(50).required("Required"),
+    phonenumber: Yup.string().min(3).max(50).required("Required"),
   });
-
-  const initialValues = {
-    phonename: "",
-    phonenumber: "",
-  };
 
   return (
     <div className={s.wraper}>
       <Formik
-        validationSchema={orderSchema}
+        initialValues={{ phonename: "", phonenumber: "" }}
+        validationSchema={validationSchema}
         onSubmit={handleSubmit}
-        initialValues={initialValues}
       >
         <Form className={s.form}>
           <label className={s.label}>
